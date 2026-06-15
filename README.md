@@ -54,14 +54,28 @@ cd h5 && pnpm build                        # 构建
 ```
 
 ### server（后端框架）
-纯净 Spring Boot 3（Java 17，Maven 单模块），`context-path = /api`，端口 `8080`。分层目录：
-`controller / service / mapper / entity / dto / config / common`。已补齐基础设施：
+Spring Boot 3（Java 17，Maven 单模块），`context-path = /api`，端口 `8080`。
+**MySQL + MyBatis-Plus + JWT** 真实实现（无模拟数据）。分层目录：
+`controller / service / mapper / entity / dto / config / common`：
 
 - **统一返回体** `common/Result<T>`（`code=0` 成功，与前端判断一致）
-- **全局异常处理** `common/GlobalExceptionHandler`（参数校验 / 业务异常 `BusinessException` / 兜底）
-- **跨域配置** `config/CorsConfig`
-- **底座演示接口**（供 admin 联调，真实项目请替换为 DB + JWT）：
-  `POST /login`、`POST /refresh-token`、`GET /get-async-routes`、`GET /mine`、`GET /mine-logs`
+- **全局异常处理** `common/GlobalExceptionHandler`（记录请求位置 + 完整堆栈，写 `logs/qovf-error.log`）
+- **跨域** `config/CorsConfig`｜**鉴权拦截器** `config/AuthInterceptor`（JWT Bearer，白名单 `/login`、`/refresh-token`）
+- **数据层**：MyBatis-Plus（`SysUser`/`SysUserMapper`），Flyway 迁移（`db/migration/V1__init.sql` 建 `sys_user`），审计列 + 软删除 + 乐观锁
+- **鉴权**：BCrypt 密码 + JWT（access/refresh），首启由 `DataInitializer` 写入初始账号
+- 接口：`POST /login`、`POST /refresh-token`、`GET /get-async-routes`、`GET /mine`、`GET /mine-logs`
+
+**本地数据库（WSL2 Docker MySQL 8）**——已通过 systemd 持久化运行：
+
+```bash
+# 启动/查看（在 WSL Ubuntu 内）
+wsl -d Ubuntu -u root -- docker start qovf-mysql      # 启动容器
+wsl -d Ubuntu -u root -- docker ps                    # 查看状态
+# 重新创建：bash .tools/setup-mysql.sh（库 qovf / root 密码见 application.yml 默认，生产用环境变量覆盖）
+```
+
+> 演示账号：`admin / admin123`（管理员）、`common / common123`（普通用户）。生产请立即改密。
+> ⚠️ WSL2 空闲会回收发行版，开发期需保持一个常驻 WSL 会话或开启 systemd，否则 `localhost:3306` 会断。
 
 本仓库已在 `.tools/` 下放置了便携版 **JDK 17（Temurin 17.0.19）** 与 **Maven 3.9.9**，无需全局安装：
 

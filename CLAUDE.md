@@ -40,12 +40,33 @@ export JAVA_HOME="/c/qovf/.tools/jdk-17.0.19+10"
 export PATH="$JAVA_HOME/bin:/c/qovf/.tools/apache-maven-3.9.9/bin:$PATH"
 
 cd server
-mvn clean package                 # compiles + runs tests + builds fat jar
+mvn clean package                 # line-check (validate) + compile + test + fat jar
 mvn spring-boot:run               # start backend on :8080
 mvn test -Dtest=QovfApplicationTests   # run a single test class
 ```
 
-The only test is `QovfApplicationTests.contextLoads` (Spring context smoke test).
+`QovfApplicationTests.contextLoads` boots the **full** context, so it needs MySQL up (Flyway + DataInitializer run). The build also runs the line-count check at the `validate` phase via `node` (Windows: `node` must be on PATH).
+
+### MySQL (required to run/test the backend)
+
+Runs as a **Docker container inside WSL2 Ubuntu** (no native install). DB `qovf`, exposed to Windows `localhost:3306`:
+
+```bash
+wsl -d Ubuntu -u root -- docker start qovf-mysql   # start
+wsl -d Ubuntu -u root -- docker ps                 # status
+bash .tools/setup-mysql.sh                          # recreate from scratch (via WSL)
+```
+
+**WSL gotcha:** WSL2 reclaims the distro when idle, which kills the container and drops `localhost:3306`. systemd is enabled (`/etc/wsl.conf`), but to be safe during a work session keep a long-running WSL process alive (e.g. `wsl -d Ubuntu -u root -- sleep 7200` in the background). If the backend gets `Communications link failure`, the distro went down — start the container again.
+
+Credentials/secrets are local-dev defaults in `application.yml` (`MYSQL_PASSWORD`, `JWT_SECRET`) overridable via env; production must override. Seeded accounts: `admin/admin123`, `common/common123`.
+
+### Backend architecture
+
+- **Real data only** — `AuthController`/`UserController`/`RouteController` are backed by MySQL via **MyBatis-Plus** (`SysUser`/`SysUserMapper`/`SysUserService`), not mock data (see `docs/01-代码规范.md#9-禁止模拟数据`).
+- **Schema** is owned by **Flyway** (`src/main/resources/db/migration/V*.sql`); never hand-edit the DB. `sys_user` carries audit columns + soft-delete (`deleted`, via MyBatis-Plus `@TableLogic` + global config) + optimistic lock (`version`). `create_time`/`update_time` auto-fill via `MetaObjectHandler`.
+- **Auth** — BCrypt passwords + JWT (`common/JwtUtil`, HS-family). `config/AuthInterceptor` validates `Authorization: Bearer <accessToken>` for all routes except the `/login`, `/refresh-token`, `/error` whitelist in `config/WebConfig`; it stashes `username`/`role` as request attributes for controllers.
+- MyBatis-Plus 3.5.9 **decoupled JSqlParser** — pagination/optimistic-lock inner interceptors require the separate `mybatis-plus-jsqlparser` dependency (already added).
 
 ## Conventions
 
