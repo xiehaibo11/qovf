@@ -1,0 +1,10 @@
+{
+  "_comment": "基线豁免：以下文件继承自 vue-pure-admin 底座或为生成的数据文件，超 500 行属历史既有，暂不强制拆分。新增/自研代码不得加入此列表，必须遵守 ≤500 行规范（见 docs/01-代码规范.md）。重构底座后应及时从本列表移除。",
+  "allow": [
+    "admin/src/components/ReIcon/data.ts",
+    "admin/src/style/sidebar.scss",
+    "admin/src/layout/components/lay-tag/index.vue",
+    "admin/src/layout/components/lay-setting/index.vue",
+    "admin/src/components/ReSeamlessScroll/src/index.vue"
+  ]
+}

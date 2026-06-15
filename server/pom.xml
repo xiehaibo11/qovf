@@ -44,6 +44,30 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
+
+            <!-- 构建时行数检查：复用根目录脚本，对 Java 源码强制「单文件 ≤500 行」规范 -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <id>check-file-lines</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>node</executable>
+                            <workingDirectory>${project.basedir}/..</workingDirectory>
+                            <arguments>
+                                <argument>scripts/check-file-lines.mjs</argument>
+                                <argument>server/src/main/java</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 </project>

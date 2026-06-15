@@ -6,9 +6,11 @@
   "description": "移动端 SPA 外汇交易平台 - 用户端框架底座 (Vue3 + Vite + Pinia + TS)",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
+    "build": "pnpm check && vite build",
     "preview": "vite preview",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "check:lines": "node ../scripts/check-file-lines.mjs src",
+    "check": "pnpm typecheck && pnpm check:lines"
   },
   "dependencies": {
     "axios": "^1.7.9",
