@@ -1,0 +1,18 @@
+# 本地密钥（仅根目录的 .env，含令牌等敏感信息，切勿提交）
+/.env
+
+# 本地工具链（便携版 JDK / Maven，体积大且平台相关）
+.tools/
+
+# 依赖与构建产物
+node_modules/
+dist/
+dist-ssr/
+target/
+
+# 系统/编辑器
+.DS_Store
+.idea/
+.vscode/
+*.log
+*.local
